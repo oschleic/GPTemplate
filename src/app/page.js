@@ -24,6 +24,9 @@ const DynamicFormBuilder = () => {
   const [loading, setLoading] = useState(false)
   const [apikey, setApikey] = useState('')
 
+  const [modalOpen, setModalOpen] = useState(false);
+
+
   // Load data from localStorage on initial render
   useEffect(() => {
     const savedTemplates = localStorage.getItem('formTemplates');
@@ -228,26 +231,35 @@ const DynamicFormBuilder = () => {
 
     setLoading(true)
 
+    if(apikey){
+      const openai = new OpenAI({
+        dangerouslyAllowBrowser: true,
+        apiKey: apikey,
+      });
+  
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            { role: "system", content: "You are a helpful assistant." },
+            {
+                role: "user",
+                content: prompt,
+            },
+        ],
+      });
 
-    const openai = new OpenAI({
-      dangerouslyAllowBrowser: true,
-      apiKey: apikey,
-    });
+      setResponse(completion.choices[0].message.content)
+    }
+    else{
+      setModalOpen(true)
+    }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-          { role: "system", content: "You are a helpful assistant." },
-          {
-              role: "user",
-              content: prompt,
-          },
-      ],
-    });
+
+
 
     setLoading(false);
 
-    setResponse(completion.choices[0].message.content)
+
 
     
     // Update the form values to only keep locked fields
@@ -570,7 +582,7 @@ const DynamicFormBuilder = () => {
         )}
       </div>
     </div>
-    <SettingsComponent apikey={apikey} setApikey={setApikey}/>
+    <SettingsComponent apikey={apikey} setApikey={setApikey} modalOpen={modalOpen} setModalOpen={setModalOpen}/>
 </>
   );
 };

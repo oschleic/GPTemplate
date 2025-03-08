@@ -3,9 +3,7 @@ import { Settings } from 'lucide-react';
 
 
 
-const SettingsComponent = ({apikey, setApikey}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
+const SettingsComponent = ({apikey, setApikey, modalOpen, setModalOpen}) => {
   // Define style classes
   const cardClass = "transition-all duration-200 rounded-xl shadow-lg overflow-hidden border dark:bg-gray-800 dark:border-gray-700 bg-white border-gray-300";
   const headerClass = "py-4 px-6 flex justify-between items-center dark:bg-gray-900 dark:text-white bg-gray-50 text-gray-800";
@@ -14,9 +12,9 @@ const SettingsComponent = ({apikey, setApikey}) => {
   const buttonPrimary = "px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 focus:outline-none focus:ring-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white dark:focus:ring-blue-800 bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-400";
   const buttonSecondary = "px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 focus:outline-none focus:ring-2 dark:bg-gray-700 dark:hover:bg-gray-800 dark:text-white dark:focus:ring-gray-900 bg-gray-200 hover:bg-gray-300 text-gray-800 focus:ring-gray-400";
 
-  const openModal = () => setIsOpen(true);
+  const openModal = () => setModalOpen(true);
   const closeModal = () => {
-    setIsOpen(false)
+    setModalOpen(false)
   };
 
   return (
@@ -30,8 +28,8 @@ const SettingsComponent = ({apikey, setApikey}) => {
         <Settings size={24} />
       </button>
 
-      {/* Modal overlay - only shown when isOpen is true */}
-      {isOpen && (
+      {/* Modal overlay - only shown when modalOpen is true */}
+      {modalOpen && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50">
           {/* Modal */}
           <div className={`${cardClass} w-full max-w-md mx-4`}>
