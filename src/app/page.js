@@ -3,6 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import OutputCard from './components/OutputCard';
 import {cardClass, headerClass, bodyClass, inputClass, disabledInputClass, buttonPrimary, buttonSuccess, buttonDanger, buttonSecondary, tagClass, buttonClass} from './components/classes'
+import Spinner from './components/spinner';
+import SettingsComponent from './components/settings';
+
+import OpenAI from "openai";
+
+
 
 const DynamicFormBuilder = () => {
   const [templates, setTemplates] = useState([]);
@@ -13,7 +19,10 @@ const DynamicFormBuilder = () => {
   const [lockedFields, setLockedFields] = useState({});
   const [savedForms, setSavedForms] = useState({});
   const [mode, setMode] = useState('build'); // 'build', 'use', or 'view'
-  const [darkMode, setDarkMode] = useState(false);
+
+  const [response, setResponse] = useState('');
+  const [loading, setLoading] = useState(false)
+  const [apikey, setApikey] = useState('')
 
   // Load data from localStorage on initial render
   useEffect(() => {
@@ -101,12 +110,27 @@ const DynamicFormBuilder = () => {
     
     // Also delete locked fields for this template
     const updatedLockedFields = { ...lockedFields };
-    delete updatedLockedFields[templateName];
-    setLockedFields(updatedLockedFields);
-    
-    if (currentTemplate.name === templateName) {
-      setCurrentTemplate({ name: '', fields: [] });
-    }
+    delete updatedLockedFields[templateName];  const cardClass = "transition-all duration-200 rounded-xl shadow-lg overflow-hidden border dark:bg-gray-800 dark:border-gray-700 bg-white border-gray-300";
+  
+    const headerClass = "py-4 px-6 flex justify-between items-center dark:bg-gray-900 dark:text-white bg-gray-50 text-gray-800";
+  
+  const bodyClass = "p-6 dark:text-gray-300 text-gray-700";
+  
+  const inputClass = "w-full px-4 py-2 rounded-lg border focus:ring-2 focus:outline-none transition-colors dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 bg-white border-gray-300 text-gray-900 focus:ring-blue-400";
+  
+  const disabledInputClass = "w-full px-4 py-2 rounded-lg border cursor-not-allowed dark:bg-gray-600 dark:border-gray-700 dark:text-gray-400 bg-gray-100 border-gray-200 text-gray-500";
+  
+  const buttonPrimary = "px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 focus:outline-none focus:ring-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white dark:focus:ring-blue-800 bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-400";
+  
+  const buttonSuccess = "px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 focus:outline-none focus:ring-2 dark:bg-green-600 dark:hover:bg-green-700 dark:text-white dark:focus:ring-green-800 bg-green-500 hover:bg-green-600 text-white focus:ring-green-400";
+  
+  const buttonDanger = "px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 focus:outline-none focus:ring-2 dark:bg-red-600 dark:hover:bg-red-700 dark:text-white dark:focus:ring-red-800 bg-red-500 hover:bg-red-600 text-white focus:ring-red-400";
+  
+  const buttonSecondary = "px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 focus:outline-none focus:ring-2 dark:bg-gray-700 dark:hover:bg-gray-800 dark:text-white dark:focus:ring-gray-900 bg-gray-200 hover:bg-gray-300 text-gray-800 focus:ring-gray-400";
+  
+  const tagClass = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium dark:bg-blue-900 dark:text-blue-200 bg-blue-100 text-blue-800";
+  const buttonClass = "px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 focus:outline-none focus:ring-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white dark:focus:ring-blue-800 bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-400";
+  
   };
 
   const useTemplate = (template) => {
@@ -187,7 +211,7 @@ const DynamicFormBuilder = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Save only the locked fields
@@ -201,6 +225,30 @@ const DynamicFormBuilder = () => {
       prompt += formValues[fieldId] + " ";
     });
     prompt = prompt.trimEnd();
+
+    setLoading(true)
+
+
+    const openai = new OpenAI({
+      dangerouslyAllowBrowser: true,
+      apiKey: apikey,
+    });
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+          { role: "system", content: "You are a helpful assistant." },
+          {
+              role: "user",
+              content: prompt,
+          },
+      ],
+    });
+
+    setLoading(false);
+
+    setResponse(completion.choices[0].message.content)
+
     
     // Update the form values to only keep locked fields
     const updatedFormValues = { ...lockedValues };
@@ -215,9 +263,7 @@ const DynamicFormBuilder = () => {
     console.log('Form submitted with values:', updatedFormValues);
     console.log('Cleared fields:', Object.keys(formValues).filter(id => !isFieldLocked(id)));
     
-    alert(prompt)
     // Show confirmation
-    alert(`Form submitted! Unlocked fields have been cleared.`);
     
     // Go back to builder
     //goBack();
@@ -225,6 +271,7 @@ const DynamicFormBuilder = () => {
 
   const goBack = () => {
     setMode('build');
+    setResponse('')
     setActiveForm(null);
   };
 
@@ -235,12 +282,12 @@ const DynamicFormBuilder = () => {
 
 
 
-  return (
+  return (<>
     <div className={`min-h-screen transition-colors duration-200 dark:bg-gray-900 dark:text-white bg-gray-200 text-gray-900`}>
       <div className="max-w-5xl mx-auto p-6">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight">
-            {mode === 'build' ? 'Form Builder' : 
+            {mode === 'build' ? 'AI Prompt Template Creator' : 
              mode === 'view' ? `Viewing: ${activeForm?.name}` : 
              `Editing: ${activeForm?.name}`}
           </h1>
@@ -248,7 +295,6 @@ const DynamicFormBuilder = () => {
         
         {mode === 'build' ? (
           <div className="space-y-8">
-            <OutputCard cardText={"Lorem ipsum dolor sit"}/>
             <div className={cardClass}>
               <div className={headerClass}>
                 <h2 className="text-xl font-semibold">Create Form Template</h2>
@@ -324,7 +370,7 @@ const DynamicFormBuilder = () => {
                 <div className={bodyClass}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {templates.map(template => (
-                      <div key={template.name} className={`p-6 rounded-xl transition-transform hover:scale-102 dark:bg-gray-700 dark:hover:bg-gray-650 bg-gray-100 hover:bg-gray-200 border border-gray-200`}>
+                      <div key={template.name} onClick={() => useTemplate(template)} className={`p-6 rounded-xl transition-transform hover:scale-102 dark:bg-gray-700 dark:hover:bg-gray-600 hover:cursor-pointer bg-gray-100 hover:bg-gray-200 border border-gray-200`}>
                         <div className="flex flex-col h-full">
                           <div className="mb-4">
                             <div className="flex items-center space-x-3 mb-2">
@@ -448,7 +494,7 @@ const DynamicFormBuilder = () => {
                           </button>
                         </div>
                         <div className={`relative ${isFieldLocked(field.id) ? 'ring-2 ring-offset-2 ' + ('dark:ring-yellow-500 ring-yellow-400') : ''}`}>
-                          <input 
+                          <textarea  
                             type="text" 
                             className={inputClass}
                             value={formValues[field.id] || ''}
@@ -483,6 +529,7 @@ const DynamicFormBuilder = () => {
                         <span>* Unlocked fields will be cleared on submit</span>
                       </div>
                     </div>
+                    {response ? <OutputCard cardText={response}/> : (loading ? <div className='flex justify-center'><Spinner/></div> : <></>)}
                   </form>
                 ) : (
                   <div className="space-y-6">
@@ -523,6 +570,8 @@ const DynamicFormBuilder = () => {
         )}
       </div>
     </div>
+    <SettingsComponent apikey={apikey} setApikey={setApikey}/>
+</>
   );
 };
 

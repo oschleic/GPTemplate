@@ -1,12 +1,27 @@
 import React, { useState } from 'react';
 import { cardClass, headerClass, bodyClass, buttonClass } from './classes';
 
+import { marked } from 'marked';
+
 const OutputCard = ({cardText}) => {
   const [copied, setCopied] = useState(false);
+
+
+  const text = {__html: marked.parse(cardText)}
+  console.log(text)
   
 //  
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(cardText).then(() => {
+  const copyToClipboard = (e) => {
+    e.preventDefault();
+
+    const blobHtml = new Blob([text.__html], { type: "text/html" });
+
+    const data = [new ClipboardItem({
+      ["text/html"]: blobHtml,
+  })];
+
+    navigator.clipboard.write(data).then(() => {
+
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -44,9 +59,7 @@ const OutputCard = ({cardText}) => {
               </div>
             </button>
           </div>
-          <div className={bodyClass}>
-            <p className="whitespace-pre-wrap">{cardText}</p>
-          </div>
+          <div className={bodyClass} dangerouslySetInnerHTML={text}></div>
         </div>
         
         {/* Success toast notification */}
